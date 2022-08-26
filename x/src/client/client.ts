@@ -5,27 +5,33 @@ import { GUI } from 'dat.gui'
 import { CSS2DRenderer, CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer'
 import { renderBloom, bloomRender, renderEffect } from './shader-ts/bloom'
 const scene = new THREE.Scene()
+const textureLoader = new THREE.TextureLoader()
+const starTexture = textureLoader.load('https://assets.codepen.io/22914/star_02.png')
+
 var path = '/assets/images/background/cosmos/' //宇宙顺序有问题，
 const format = '.jpg'
 new THREE.CubeTextureLoader().load(
     [
-        path + 'Green-Nebula-Left-TEX' + format,
-        path + 'Green-Nebula-Right-TEX' + format,
-        path + 'Green-Nebula-Top-TEX' + format,
-        path + 'Green-Nebula-Bottom-TEX' + format,
-        path + 'Green-Nebula-Front-TEX' + format,
-        path + 'Green-Nebula-Back-TEX' + format,
+        path + 'Dark-Nebula-Left-TEX' + format,
+        path + 'Dark-Nebula-Right-TEX' + format,
+        path + 'Dark-Nebula-Top-TEX' + format,
+        path + 'Dark-Nebula-Bottom-TEX' + format,
+        path + 'Dark-Nebula-Front-TEX' + format,
+        path + 'Dark-Nebula-Back-TEX' + format,
     ],
     function (res) {
         scene.background = res
-        scene.layers.toggle(0)
-        console.log(scene.background)
     }
 )
 const camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 1, 1000)
 camera.position.z = 2
 
-const renderer = new THREE.WebGLRenderer()
+const renderer = new THREE.WebGLRenderer({
+    alpha: true,
+    antialias: true,
+    powerPreference: 'high-performance',
+    logarithmicDepthBuffer: true,
+})
 renderer.setSize(window.innerWidth, window.innerHeight)
 document.body.appendChild(renderer.domElement)
 
@@ -149,11 +155,12 @@ bsc5dat.onreadystatechange = function () {
                             let starId = parseInt(rowData[i + 2].trim())
                             if (starId in stars) {
                                 const star: Star = stars[starId]
+                                star.v.y = star.v.y / 2
                                 points.push(star.v)
 
-                                var starDiv = document.createElement('div')
+                                var starDiv: any = document.getElementById('points')?.cloneNode()
+                                starDiv.style.zIndex = '9999999'
                                 starDiv.className = 'starLabel'
-                                starDiv.textContent = star.name.substr(0, star.name.length - 3)
                                 var starLabel = new CSS2DObject(starDiv)
                                 starLabel.position.set(star.v.x, star.v.y, star.v.z)
                                 starLabel.userData.type = 'starName'
@@ -261,8 +268,6 @@ const parameters = {
     outsideColor: '#2fb4fc',
 }
 // TextureLoader
-const textureLoader = new THREE.TextureLoader()
-const starTexture = textureLoader.load('https://assets.codepen.io/22914/star_02.png')
 
 // const texture = textureLoader.load(
 //   "https://assets.codepen.io/22914/eso0932a.jpg",

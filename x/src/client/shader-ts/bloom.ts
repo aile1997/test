@@ -6,10 +6,11 @@ import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js'
 import { CopyShader } from 'three/examples/jsm/shaders/CopyShader.js'
 import { TAARenderPass } from 'three/examples/jsm/postprocessing/TAARenderPass.js'
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js'
-
+import { FocusShader } from 'three/examples/jsm/shaders/FocusShader.js'
+import { AfterimagePass } from 'three/examples/jsm/postprocessing/AfterimagePass.js'
 let bloomComposer: any
 let finalComposer: any
-
+let afterimagePass: any
 // 区分辉光与非辉光层
 // const ENTIRE_SCENE = 0;
 const BLOOM_SCENE = 1
@@ -45,10 +46,15 @@ const renderBloom = (renderer: any, scene: any, camera: any) => {
     // 添加效果合成器
     bloomComposer = new EffectComposer(renderer)
     bloomComposer.renderToScreen = false
-
+    let focusShader = new ShaderPass(FocusShader)
+    focusShader.uniforms.screenWidth.value = window.innerWidth
+    focusShader.uniforms.screenHeight.value = window.innerHeight
+    focusShader.uniforms.sampleDistance.value = 1.5
     const taaRenderPass = new (TAARenderPass as any)(scene, camera)
     taaRenderPass.sampleLevel = 1
 
+    afterimagePass = new AfterimagePass()
+    afterimagePass.uniforms.damp.value = 0.92
     // 添加基本的渲染通道
     const renderPass = new RenderPass(scene, camera)
 
@@ -60,10 +66,13 @@ const renderBloom = (renderer: any, scene: any, camera: any) => {
     bloomPass.radius = bloomParams.bloomRadius
     const copyPass = new ShaderPass(CopyShader)
     bloomComposer.addPass(renderPass)
+    bloomComposer.addPass(focusShader)
+
+    bloomComposer.addPass(afterimagePass)
     // bloomComposer.addPass(taaRenderPass);
     // 把通道加入到组合器
-    bloomComposer.addPass(bloomPass)
-    // bloomComposer.addPass(copyPass);
+    // bloomComposer.addPass(bloomPass)
+    bloomComposer.addPass(copyPass)
 
     const finalPass = new ShaderPass(
         new THREE.ShaderMaterial({
@@ -82,8 +91,10 @@ const renderBloom = (renderer: any, scene: any, camera: any) => {
     finalComposer = new EffectComposer(renderer)
 
     finalComposer.addPass(renderPass)
-    finalComposer.addPass(taaRenderPass)
-    finalComposer.addPass(finalPass)
+    finalComposer.addPass(focusShader)
+    // finalComposer.addPass(taaRenderPass)
+    // finalComposer.addPass(finalPass)
+    finalComposer.addPass(afterimagePass)
     finalComposer.addPass(copyPass)
 }
 

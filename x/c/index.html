@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Three.js TypeScript Tutorials by Sean Bradley</title>
+  <style>
+    body {
+      overflow: hidden;
+      margin: 0px;
+    }
+
+    .starLabel {
+      color: #888888;
+      font-family: monospace;
+      color: rgba(131, 255, 131, 0.52);
+      pointer-events: none;
+      font-size: 11px;
+    }
+
+    .constellationLabel {
+      color: #888888;
+      font-family: monospace;
+      color: rgba(251, 255, 4, 0.89);
+      pointer-events: none;
+      font-size: 11px;
+    }
+
+    #points {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      top: 10px;
+      background-color: #fff;
+      box-shadow: 10px 10px 50px 5px rgba(255, 255, 255);
+
+      /* animation: pulsate 6s linear infinite; */
+      /* display: none; */
+      position: absolute;
+      top: 0;
+    }
+
+    @keyframes pulsate {
+      50% {
+        box-shadow:
+          0 0 20px #fff,
+          20px 0 80px #f0f,
+          -20px 0 80px #0ff,
+          inset 0 0 50px #fff,
+          inset -50px 0 80px #f0f,
+          inset 50px 0 80px #0ff,
+          inset -50px 0 300px #f0f,
+          inset 50px 0 300px #0ff;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="points"></div>
+  <script id="vertexShader" type="x-shader/x-vertex">
+    uniform float uSize;
+  uniform float uTime;
+  uniform float uHoleSize;
+  
+  attribute float aScale;
+  attribute vec3 aRandomness;
+  
+  varying vec3 vColor;
+  
+  void main() {
+    vec4 modelPosition = modelMatrix * vec4(position, 1.0);
+    
+    // Spin
+    float angle = atan(modelPosition.x, modelPosition.z);
+    float distanceToCenter = length(modelPosition.xz) + uHoleSize;
+    float uTimeOffset = uTime + (uHoleSize * 30.0);
+    float angleOffset = (1.0 / distanceToCenter) * uTimeOffset * 0.2;
+    angle += angleOffset;
+    
+    modelPosition.x = cos(angle) * distanceToCenter;
+    modelPosition.z = sin(angle) * distanceToCenter;  
+    modelPosition.xyz += aRandomness; 
+  
+    vec4 viewPosition = viewMatrix * modelPosition;
+    vec4 projectedPosition = projectionMatrix * viewPosition;
+  
+  
+    gl_Position = projectedPosition; 
+    float scale = uSize * aScale;
+    
+    gl_PointSize = scale;
+    gl_PointSize *= ( 1.0 / - viewPosition.z );
+    vColor = color;
+  }
+  </script>
+  <script id="fragmentShader" type="x-shader/x-fragment">
+    varying vec3 vColor;
+  varying vec2 vUv;
+  uniform sampler2D uTexture;
+  
+  void main() {
+    gl_FragColor = vec4( vColor, 1.0 );
+    gl_FragColor = gl_FragColor * texture2D(uTexture, vec2( gl_PointCoord.x, gl_PointCoord.y ) );
+    gl_FragColor = gl_FragColor * vec4( vColor, 1.0 );
+  }
+  </script>
+  <script type="module" src="bundle.js"></script>
+</body>
+
+</html>
